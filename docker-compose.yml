@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  jenkins-dind:
+   image: docker:dind
+   environment:
+    - DOCKER_TLS_CERTDIR=/certs
+   volumes: 
+    - "/var/lib/docker/volumes/jenkins-docker-certs:/certs/client"
+    - "/var/lib/docker/volumes/jenkins-data:/var/jenkins_home"
+   privileged: true 
+   ports: 
+    - "2376:2376"
+  jenkins-docker-compose: 
+   image: jenkins_docker_compose
+   environment:
+    - DOCKER_HOST=tcp://docker:2376
+    - DOCKER_CERT_PATH=/certs/client
+    - DOCKER_TLS_VERIFY=1
+   volumes:
+    - "/var/lib/docker/volumes/jenkins-data:/var/jenkins_home"
+    - "/var/lib/docker/volumes/jenkins-docker-certs:/certs/client:ro"
+   privileged: true
+   ports:
+    - "8080:8080"
+    - "50000:50000"
+  gitlab: 
+   image: gitlab/gitlab-ce:latest
+   volumes: 
+    - "/srv/gitlab/logs:/var/log/gitlab"
+    - "/srv/gitlab/data:/var/opt/gitlab"
+    - "/srv/gitlab/config:/etc/gitlab"
+   container_name: gitlab.example.com
+   ports:
+    - "80:80"
+    - "22:22"
+    - "433:433"
+networks:
+  default:
+   external:
+    name: jenkins
+
